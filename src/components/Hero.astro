@@ -191,6 +191,8 @@ import { stats } from '../data/site';
     const HOLD = 5.2, MORPH = 2.0, CYCLE = HOLD + MORPH;
 
     const frame = (tms: number) => {
+      const bw = canvas.clientWidth, bh = canvas.clientHeight;
+      if (Math.abs(bw - W) > 0.5 || Math.abs(bh - H) > 0.5) resize();
       const t = tms / 1000;
       const ci = Math.floor(t / CYCLE);
       const cur = ci % COUNT, prev = (cur + COUNT - 1) % COUNT;
@@ -282,14 +284,30 @@ import { stats } from '../data/site';
     resize();
     // static frame for reduced motion: the runner, fully drawn
     const STATIC_T = 2 * CYCLE + MORPH + 1.5;
-    window.addEventListener('resize', () => {
+    // Re-measure whenever the canvas box changes size, not only on window resize:
+    // late web-font loading changes the hero height, and a stale backing store
+    // would be stretched (blurry, offset, heavier points).
+    const onResize = () => {
       resize(); // resizing clears the canvas, so redraw immediately
       if (reduce) return frame(STATIC_T * 1000);
       const wasRunning = running;
       running = false;
       frame(performance.now());
       running = wasRunning;
-    });
+    };
+    if ('ResizeObserver' in window) new ResizeObserver(onResize).observe(canvas);
+    else window.addEventListener('resize', onResize);
+    // device pixel ratio changes (browser zoom, moving to another monitor)
+    const watchDpr = () =>
+      matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`).addEventListener(
+        'change',
+        () => {
+          onResize();
+          watchDpr();
+        },
+        { once: true },
+      );
+    watchDpr();
     window.addEventListener(
       'pointermove',
       (e) => {
