@@ -1,0 +1,268 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Illustration from '../../components/Illustration.astro';
+import Icon from '../../components/Icon.astro';
+
+export async function getStaticPaths() {
+  const all = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+  const withPage = all.filter((p) => p.data.hasPage);
+  return withPage.map((project, i) => ({
+    params: { slug: project.id },
+    props: { project, next: withPage[(i + 1) % withPage.length] },
+  }));
+}
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  next: CollectionEntry<'projects'>;
+}
+
+const { project, next } = Astro.props;
+const p = project.data;
+const { Content } = await render(project);
+---
+
+<Base title={`${p.short} · Daniel Lepold`} description={p.summary}>
+  <article class="case">
+    <header class="case-head wrap">
+      <a class="back mono" href="/#projects"><Icon name="arrow" class="back-ic" /> All projects</a>
+      <p class="case-meta mono">{p.context} · {p.year}</p>
+      <h1 class="case-title display">{p.title}</h1>
+      <p class="case-summary">{p.summary}</p>
+    </header>
+
+    <div class="wrap">
+      <div class="case-art">
+        <Illustration kind={p.illustration} />
+      </div>
+
+      {
+        (p.metrics ?? []).length > 0 && (
+          <dl class="case-metrics" style={`--n:${p.metrics.length}`}>
+            {p.metrics.map((m) => (
+              <div>
+                <dt class="display">{m.value}</dt>
+                <dd>{m.label}</dd>
+              </div>
+            ))}
+          </dl>
+        )
+      }
+
+      <div class="case-body">
+        <aside class="case-side">
+          {
+            p.role && (
+              <div>
+                <p class="mono muted">Role</p>
+                <p>{p.role}</p>
+              </div>
+            )
+          }
+          <div>
+            <p class="mono muted">Stack</p>
+            <ul class="chips">{p.tags.map((t) => <li class="chip">{t}</li>)}</ul>
+          </div>
+          {
+            (p.partners ?? []).map((pt) => (
+              <div class="partner">
+                <p class="mono muted">{pt.role}</p>
+                {pt.logo && <img src={pt.logo} alt="" />}
+                <p>{pt.name}</p>
+              </div>
+            ))
+          }
+          <div>
+            <p class="mono muted">Code</p>
+            {
+              p.repo ? (
+                <a class="link-arrow" href={p.repo} target="_blank" rel="noopener">
+                  GitHub repository <Icon name="arrow-up-right" />
+                </a>
+              ) : (
+                <p class="private">
+                  <Icon name="lock" /> {p.codeNote ?? 'Private'}
+                </p>
+              )
+            }
+          </div>
+        </aside>
+
+        <div class="prose">
+          <Content />
+        </div>
+      </div>
+    </div>
+
+    {
+      next.id !== project.id && (
+        <a class="next" href={`/projects/${next.id}/`}>
+          <div class="wrap next-in">
+            <span class="mono muted">Next case study</span>
+            <span class="next-title display">
+              {next.data.title} <Icon name="arrow" />
+            </span>
+          </div>
+        </a>
+      )
+    }
+  </article>
+</Base>
+
+<style>
+  .case-head {
+    padding-top: calc(var(--header-h) + clamp(40px, 7vw, 88px));
+    padding-bottom: clamp(32px, 5vw, 56px);
+  }
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+  .back:hover {
+    color: var(--accent);
+  }
+  .back :global(.back-ic) {
+    width: 14px;
+    height: 14px;
+    transform: rotate(180deg);
+  }
+  .case-meta {
+    margin-top: 40px;
+    font-size: 11px;
+    color: var(--accent);
+  }
+  .case-title {
+    margin-top: 18px;
+    font-size: clamp(30px, 3.9vw, 52px);
+    max-width: 24ch;
+  }
+  .case-summary {
+    margin-top: 28px;
+    max-width: 58ch;
+    font-size: clamp(18px, 1.8vw, 21px);
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+  .case-art {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+    padding: clamp(20px, 5vw, 64px) clamp(16px, 8vw, 140px);
+  }
+  .case-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 24px 0 0;
+    border-top: 1px solid var(--line);
+  }
+  .case-metrics > div {
+    padding: 22px 16px 22px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .case-metrics > div:nth-child(even) {
+    padding-left: 16px;
+    border-left: 1px solid var(--line);
+  }
+  .case-metrics dt {
+    font-size: clamp(24px, 2.6vw, 34px);
+    line-height: 1.05;
+  }
+  .case-metrics dd {
+    margin: 8px 0 0;
+    font-size: 13.5px;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+  @media (min-width: 900px) {
+    .case-metrics {
+      grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+    }
+    .case-metrics > div + div {
+      padding-left: 20px;
+      border-left: 1px solid var(--line);
+    }
+  }
+  .case-body {
+    display: grid;
+    gap: 40px;
+    padding-block: clamp(56px, 8vw, 96px);
+  }
+  .case-side {
+    display: grid;
+    gap: 26px;
+    align-content: start;
+    font-size: 15px;
+  }
+  .case-side .mono {
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+  .partner img {
+    height: 44px;
+    width: auto;
+    margin-bottom: 10px;
+  }
+  .private {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+  }
+  .private :global(svg) {
+    width: 14px;
+    height: 14px;
+  }
+  .prose {
+    max-width: 68ch;
+  }
+  @media (min-width: 960px) {
+    .case-body {
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 64px;
+    }
+    .case-side {
+      position: sticky;
+      top: calc(var(--header-h) + 32px);
+    }
+  }
+  .next {
+    display: block;
+    border-top: 1px solid var(--line);
+    padding-block: clamp(48px, 7vw, 88px);
+    transition: background 0.3s;
+  }
+  .next:hover {
+    background: var(--surface);
+  }
+  .next-in {
+    display: grid;
+    gap: 14px;
+  }
+  .next-in .mono {
+    font-size: 11px;
+  }
+  .next-title {
+    font-size: clamp(24px, 3vw, 40px);
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .next-title :global(svg) {
+    width: 0.6em;
+    height: 0.6em;
+    color: var(--accent);
+    transition: transform 0.3s;
+  }
+  .next:hover .next-title :global(svg) {
+    transform: translateX(8px);
+  }
+</style>

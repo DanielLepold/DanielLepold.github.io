@@ -1,1 +1,13 @@
-.idea
+node_modules/
+dist/
+.astro/
+.DS_Store
+.idea/
+*.log
+
+# personal documents (CVs, theses) stay local
+*.docx
+*.pdf
+
+# original logo files (converted copies live in public/logos)
+logo-originals/

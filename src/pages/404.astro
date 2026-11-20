@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+---
+
+<Base title="Not found · Daniel Lepold">
+  <section class="nf wrap">
+    <p class="mono muted">Error 404 · element not found in model</p>
+    <h1 class="display">This page has <em>no load path</em>.</h1>
+    <a class="btn btn-primary" href="/">Back to the homepage <Icon name="arrow" /></a>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    min-height: 80svh;
+    display: grid;
+    align-content: center;
+    gap: 28px;
+    padding-top: var(--header-h);
+  }
+  .nf .mono {
+    font-size: 11px;
+  }
+  h1 {
+    font-size: clamp(40px, 6vw, 76px);
+    max-width: 14ch;
+  }
+  .btn {
+    justify-self: start;
+  }
+</style>

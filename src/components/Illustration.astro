@@ -1,0 +1,242 @@
+---
+/**
+ * Line-drawn schematic illustrations, one per project, in a shared
+ * "engineering drawing" style. Colours come from CSS tokens, so they follow the theme.
+ */
+interface Props {
+  kind: 'hammer' | 'carbon' | 'graph' | 'football' | 'vo2' | 'mlops' | 'animals';
+  class?: string;
+}
+const { kind, class: cls } = Astro.props;
+
+// ── hammer: helix of turns rising, then ballistic flight ──
+const HX = 118, HY = 200;
+const helix: string[] = [];
+for (let i = 0; i <= 260; i++) {
+  const t = i / 260;
+  const a = t * Math.PI * 2 * 4 - Math.PI / 2;
+  const r = 30 + t * 18;
+  const x = HX + Math.cos(a) * r;
+  const y = HY - t * 58 + Math.sin(a) * r * 0.34;
+  helix.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+}
+const last = helix[helix.length - 1].split(',').map(Number);
+const flight: string[] = [];
+for (let i = 0; i <= 80; i++) {
+  const t = i / 80;
+  const x = last[0] + t * 236;
+  const y = last[1] - (t * 230 - t * t * 200);
+  flight.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+}
+const cams = Array.from({ length: 8 }, (_, i) => {
+  const a = (i / 8) * Math.PI * 2 + 0.2;
+  return { x: HX + Math.cos(a) * 100, y: HY + Math.sin(a) * 36, a };
+});
+
+// ── graph: deterministic pseudo-random network ──
+let seed = 7;
+const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+const hubs = [
+  { x: 120, y: 92 },
+  { x: 268, y: 84 },
+  { x: 200, y: 182 },
+  { x: 318, y: 186 },
+];
+const nodes: { x: number; y: number; h: number }[] = [];
+hubs.forEach((h, hi) => {
+  const n = 9 + Math.floor(rnd() * 4);
+  for (let i = 0; i < n; i++) {
+    const a = rnd() * Math.PI * 2;
+    const r = 22 + rnd() * 40;
+    nodes.push({ x: h.x + Math.cos(a) * r, y: h.y + Math.sin(a) * r * 0.72, h: hi });
+  }
+});
+
+// ── football players ──
+const players = Array.from({ length: 16 }, (_, i) => ({
+  x: 70 + rnd() * 260,
+  y: 62 + rnd() * 140,
+  team: i % 2,
+  dx: (rnd() - 0.5) * 30,
+  dy: (rnd() - 0.5) * 18,
+}));
+
+// ── vo2 series ──
+const vo2 = Array.from({ length: 28 }, (_, i) => {
+  const base = 47 + i * 0.22 + Math.sin(i * 0.9) * 0.7 + (rnd() - 0.5) * 0.8;
+  return { x: 54 + i * 11.5, y: 210 - (base - 44) * 18 };
+});
+---
+
+<svg class:list={['illu', cls]} viewBox="0 0 400 260" role="img" aria-hidden="true">
+  {kind === 'hammer' && (
+    <g>
+      <ellipse class="ln" cx={HX} cy={HY} rx="50" ry="17" />
+      <ellipse class="ln-soft" cx={HX} cy={HY} rx="100" ry="36" />
+      {cams.map((c) => (
+        <g>
+          <line class="ln-dash" x1={c.x} y1={c.y} x2={last[0]} y2={last[1]} />
+          <rect class="paper" x={c.x - 5} y={c.y - 4} width="10" height="8" />
+          <rect class="ln" x={c.x - 5} y={c.y - 4} width="10" height="8" />
+        </g>
+      ))}
+      <polyline class="ac" points={helix.join(' ')} opacity="0.4" />
+      <polyline class="ac" points={flight.join(' ')} />
+      <circle class="ac-fill" cx={last[0]} cy={last[1]} r="3.5" />
+      <line class="ln" x1={last[0]} y1={last[1]} x2={last[0] + 46} y2={last[1] - 26} />
+      <path class="ln" d={`M ${last[0] + 22} ${last[1]} A 22 22 0 0 0 ${last[0] + 19} ${last[1] - 11}`} />
+      <line class="ln-dash" x1={last[0]} y1={last[1]} x2={last[0] + 60} y2={last[1]} />
+      <text x={last[0] + 50} y={last[1] - 30}>v₀ · α₀</text>
+      <text x="300" y="150">ballistic fit</text>
+      <text x="18" y="252">8 cams · 240 fps</text>
+    </g>
+  )}
+
+  {kind === 'carbon' && (
+    <g>
+      {/* isometric building wireframe */}
+      {[0, 1, 2, 3].map((f) => (
+        <g transform={`translate(0 ${-f * 30})`}>
+          <path class="ln" d="M60 200 L130 228 L200 200 L130 172 Z" />
+        </g>
+      ))}
+      <path class="ln" d="M60 200 V110 M130 228 V138 M200 200 V110 M130 172 V82" />
+      <path class="ac-soft" d="M60 200 L130 228 L130 198 L60 170 Z" />
+      <path class="ac-soft" d="M130 228 L200 200 L200 170 L130 198 Z" />
+      <text x="54" y="68">IfcSlab · IfcWall · IfcColumn</text>
+      {/* arrow */}
+      <line class="ln-dash" x1="214" y1="160" x2="246" y2="160" />
+      <path class="ln" d="M242 156 L247 160 L242 164" />
+      {/* bars */}
+      {[
+        ['Concrete', 92, true],
+        ['Steel', 40, false],
+        ['Masonry', 26, false],
+        ['Timber', 12, false],
+        ['Glass', 8, false],
+      ].map(([label, w, hl], i) => (
+        <g transform={`translate(258 ${100 + i * 26})`}>
+          <rect class={hl ? 'ac-fill' : 'dot'} x="0" y="0" width={w as number} height="9" rx="1" opacity={hl ? 1 : 0.35} />
+          <text x="0" y="-3">{label as string}</text>
+        </g>
+      ))}
+      <text x="258" y="238">kg CO₂e · by material</text>
+    </g>
+  )}
+
+  {kind === 'graph' && (
+    <g>
+      {nodes.map((n) => (
+        <line class="ln-soft" x1={hubs[n.h].x} y1={hubs[n.h].y} x2={n.x} y2={n.y} />
+      ))}
+      <line class="ac" x1="120" y1="92" x2="200" y2="182" opacity="0.6" />
+      <line class="ac" x1="268" y1="84" x2="200" y2="182" opacity="0.6" />
+      <line class="ac" x1="318" y1="186" x2="200" y2="182" opacity="0.6" />
+      {nodes.map((n) => (
+        <circle class="dot" cx={n.x} cy={n.y} r="2.4" />
+      ))}
+      {hubs.map((h, i) => (
+        <g>
+          <circle class="paper" cx={h.x} cy={h.y} r={i === 2 ? 9 : 6} />
+          <circle class="ac" cx={h.x} cy={h.y} r={i === 2 ? 9 : 6} />
+        </g>
+      ))}
+      <text x="214" y="208">max degree centrality</text>
+      <text x="24" y="246">IfcRelVoidsElement · IfcRelContainedInSpatialStructure</text>
+    </g>
+  )}
+
+  {kind === 'football' && (
+    <g>
+      {/* perspective pitch (camera view) mapped to top-down */}
+      <path class="ln" d="M40 210 L120 50 L280 50 L360 210 Z" />
+      <path class="ln-soft" d="M200 50 L200 210" />
+      <ellipse class="ln-soft" cx="200" cy="124" rx="38" ry="18" />
+      <path class="ln-soft" d="M58 174 L102 174 L118 86 L86 86" />
+      <path class="ln-soft" d="M342 174 L298 174 L282 86 L314 86" />
+      {players.map((p) => (
+        <g>
+          <path class={p.team ? 'ac' : 'ln'} d={`M${p.x - p.dx} ${p.y - p.dy} Q ${p.x - p.dx / 2} ${p.y} ${p.x} ${p.y}`} opacity="0.5" />
+          <ellipse class={p.team ? 'ac' : 'ln'} cx={p.x} cy={p.y + 3} rx="6" ry="2.4" />
+          <circle class={p.team ? 'ac-fill' : 'dot'} cx={p.x} cy={p.y - 3} r="2.2" />
+        </g>
+      ))}
+      <rect class="paper" x="256" y="18" width="104" height="18" rx="2" />
+      <rect class="ln" x="256" y="18" width="104" height="18" rx="2" />
+      <text x="263" y="30">#7 · 24 km/h · 61 m</text>
+      <text x="24" y="246">px → m · homography</text>
+    </g>
+  )}
+
+  {kind === 'vo2' && (
+    <g>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <line class="ln-soft" x1="48" x2="372" y1={70 + i * 35} y2={70 + i * 35} />
+      ))}
+      <line class="ln" x1="48" x2="372" y1="214" y2="214" />
+      <polyline class="ac" points={vo2.map((p) => `${p.x},${p.y}`).join(' ')} opacity="0.35" />
+      <path class="ac" d={`M${vo2[0].x} ${vo2[0].y + 2} C 160 ${vo2[0].y - 10}, 260 ${vo2[27].y + 18}, ${vo2[27].x} ${vo2[27].y - 4}`} />
+      {vo2.map((p, i) => (
+        <circle class={i % 3 === 0 ? 'ac-fill' : 'dot'} cx={p.x} cy={p.y} r="2.4" opacity={i % 3 === 0 ? 1 : 0.45} />
+      ))}
+      <text x="48" y="58">VO₂ max · ml/kg/min</text>
+      <text x="48" y="234">.fit · message 140</text>
+      <text x="300" y="234">run · trail · bike</text>
+    </g>
+  )}
+
+  {kind === 'mlops' && (
+    <g>
+      {[
+        { x: 28, label: 'UI', sub: 'request' },
+        { x: 112, label: 'Server', sub: 'routing' },
+        { x: 196, label: 'RabbitMQ', sub: 'queue' },
+        { x: 280, label: 'Worker', sub: 'predict' },
+      ].map((b, i) => (
+        <g>
+          <rect class="paper" x={b.x} y="100" width="76" height="52" rx="6" />
+          <rect class={i === 2 ? 'ac' : 'ln'} x={b.x} y="100" width="76" height="52" rx="6" />
+          <text x={b.x + 10} y="122">{b.label}</text>
+          <text x={b.x + 10} y="138" opacity="0.6">{b.sub}</text>
+          {i < 3 && <line class="ln-dash" x1={b.x + 76} y1="126" x2={b.x + 84} y2="126" />}
+        </g>
+      ))}
+      {[0, 1, 2].map((i) => (
+        <rect class="ac-fill" x={214 + i * 14} y="160" width="9" height="6" rx="1" opacity={0.4 + i * 0.25} />
+      ))}
+      <rect class="ln" x="280" y="196" width="76" height="34" rx="17" />
+      <text x="292" y="217">MLflow</text>
+      <line class="ln-dash" x1="318" y1="152" x2="318" y2="196" />
+      <text x="28" y="60">model registry → async inference</text>
+    </g>
+  )}
+
+  {kind === 'animals' && (
+    <g>
+      {Array.from({ length: 9 }, (_, i) => (
+        <rect class={i === 4 ? 'ac' : 'ln'} x={36 + (i % 3) * 36} y={66 + Math.floor(i / 3) * 36} width="30" height="30" rx="3" />
+      ))}
+      <path class="ac-soft" d="M76 112 q 8 -14 16 0 q -8 8 -16 0" />
+      <line class="ln-dash" x1="150" y1="120" x2="186" y2="120" />
+      {[0, 1, 2, 3].map((l) => (
+        <g>
+          {Array.from({ length: 5 - l }, (_, j) => (
+            <circle class="dot" cx={200 + l * 30} cy={120 + (j - (4 - l) / 2) * 20} r="3" opacity="0.5" />
+          ))}
+        </g>
+      ))}
+      <line class="ln-dash" x1="300" y1="120" x2="316" y2="120" />
+      {[
+        ['cat', 0.82],
+        ['dog', 0.11],
+        ['horse', 0.04],
+      ].map(([l, p], i) => (
+        <g transform={`translate(322 ${94 + i * 24})`}>
+          <rect class={i === 0 ? 'ac-fill' : 'dot'} x="0" y="4" width={(p as number) * 56} height="6" rx="1" opacity={i === 0 ? 1 : 0.35} />
+          <text x="0" y="0">{l as string}</text>
+        </g>
+      ))}
+      <text x="36" y="214">TinyVGG · ResNet18 · VGG16</text>
+    </g>
+  )}
+</svg>

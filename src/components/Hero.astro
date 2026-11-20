@@ -1,0 +1,453 @@
+---
+import Icon from './Icon.astro';
+import { stats } from '../data/site';
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-grid" aria-hidden="true"></div>
+  <canvas class="mesh" data-mesh aria-hidden="true"></canvas>
+
+  <div class="wrap hero-in">
+    <p class="eyebrow mono reveal">
+      <span class="pulse" aria-hidden="true"></span>
+      Software Engineer · Data Scientist · Computational Structural Engineer · Sport Scientist · Austria / Hungary
+    </p>
+
+    <h1 id="hero-title" class="display title reveal" style="--d:.08s">
+      Daniel<br />Lepold
+    </h1>
+
+    <p class="lede reveal" style="--d:.16s">
+      I build software for a more <em>sustainable built environment</em> and for
+      <em>sport science</em>: AEC and geospatial tools with the SDKs and services behind
+      them, and sport analytics software that uses computer vision to analyse
+      biomechanics, monitor athletes and track performance.
+    </p>
+
+    <div class="cta reveal" style="--d:.24s">
+      <a class="btn btn-primary" href="#projects">Selected projects <Icon name="arrow" /></a>
+      <a class="btn btn-ghost" href="#contact">Get in touch</a>
+    </div>
+
+    <dl class="stats">
+      {
+        stats.map((s, i) => (
+          <div class="stat reveal" style={`--d:${0.32 + i * 0.06}s`}>
+            <dt class="display">
+              {s.value}
+              {s.unit && <span class="unit">{s.unit}</span>}
+            </dt>
+            <dd>{s.label}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>
+
+<script>
+  /**
+   * One point cloud, three disciplines. ~1200 points flow between a BIM building
+   * frame, a city block model with a climate heat map, and a running athlete: a
+   * point cloud baked from a motion-captured run cycle of a human model (contours
+   * emphasised by surface normal).
+   */
+  type P3 = [number, number, number];
+  type Seg = [number, number, number, number, number, number, number]; // a, b, accent 0..1
+  type Cloud = { pos: Float32Array; acc: Float32Array; nrm?: Float32Array };
+
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-mesh]');
+  if (canvas) {
+    const ctx = canvas.getContext('2d')!;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const N = 1200;
+
+    // ───────────── line shapes: building and city ─────────────
+    const box = (x0: number, y0: number, z0: number, x1: number, y1: number, z1: number, acc = 0): Seg[] => {
+      const v = [
+        [x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1],
+        [x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1],
+      ];
+      const e = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
+      return e.map(([a, b]) => [...v[a], ...v[b], acc] as Seg);
+    };
+    const rect = (x0: number, z0: number, x1: number, z1: number, y: number, acc = 0): Seg[] => [
+      [x0, y, z0, x1, y, z0, acc], [x1, y, z0, x1, y, z1, acc],
+      [x1, y, z1, x0, y, z1, acc], [x0, y, z1, x0, y, z0, acc],
+    ];
+    const building = (): Seg[] => {
+      const s: Seg[] = [];
+      const w = 0.34, base = -0.85, top = 0.8;
+      for (let f = 0; f <= 8; f++) s.push(...rect(-w, -w, w, w, base + (f * (top - base)) / 8));
+      for (const x of [-w, 0, w]) for (const z of [-w, 0, w]) s.push([x, base, z, x, top, z, x === w && z === 0 ? 1 : 0]);
+      s.push(...box(w, base, -0.2, w + 0.42, base + 0.5, 0.3));
+      s.push(...rect(w, -0.2, w + 0.42, 0.3, base + 0.25));
+      return s;
+    };
+    const city = (): Seg[] => {
+      const s: Seg[] = [];
+      let seed = 11;
+      const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+      const n = 5, step = 0.34, fp = 0.12, base = -0.6;
+      for (let i = 0; i < n; i++)
+        for (let j = 0; j < n; j++) {
+          const x = (i - (n - 1) / 2) * step, z = (j - (n - 1) / 2) * step;
+          const d = Math.hypot(x, z) / 0.96;
+          const h = 0.18 + (1 - d) * 0.75 * (0.55 + rnd() * 0.6);
+          const heat = 1 - d + (rnd() - 0.5) * 0.3 > 0.55 ? 1 : 0;
+          s.push(...box(x - fp, base, z - fp, x + fp, base + h, z + fp, heat));
+        }
+      s.push(...rect(-0.95, -0.95, 0.95, 0.95, base));
+      return s;
+    };
+    const sampleSegs = (segs: Seg[]): Cloud => {
+      const len = segs.map((g) => Math.hypot(g[3] - g[0], g[4] - g[1], g[5] - g[2]));
+      const total = len.reduce((a, b) => a + b, 0);
+      const pos = new Float32Array(N * 3), acc = new Float32Array(N);
+      let si = 0, run = 0;
+      for (let k = 0; k < N; k++) {
+        const target = ((k + 0.5) / N) * total;
+        while (run + len[si] < target && si < segs.length - 1) run += len[si++];
+        const g = segs[si], f = len[si] ? (target - run) / len[si] : 0;
+        pos[k * 3] = g[0] + (g[3] - g[0]) * f;
+        pos[k * 3 + 1] = g[1] + (g[4] - g[1]) * f;
+        pos[k * 3 + 2] = g[2] + (g[5] - g[2]) * f;
+        acc[k] = g[6];
+      }
+      return { pos, acc };
+    };
+
+    // ───────────── runner: baked motion-capture point cloud ─────────────
+    // /runner.bin holds a run cycle sampled from an animated human model:
+    // header [N, F, J, durationMs] (uint16), positions int16[F][N][3],
+    // normals int8[F][N][3] (+pad), joints int16[F][J][3]. Positions are in hero units.
+    type Run = { F: number; J: number; dur: number; pos: Float32Array; nrm: Float32Array; jnt: Float32Array };
+    let run: Run | null = null;
+    const runPos = new Float32Array(N * 3), runNrm = new Float32Array(N * 3), runAcc = new Float32Array(N);
+    fetch('/runner.bin')
+      .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)))
+      .then((buf) => {
+        const [n, F, J, ms] = new Uint16Array(buf.slice(0, 8));
+        if (n !== N) return;
+        const Q = 1.5 / 32767;
+        let o = 8;
+        const pos = Float32Array.from(new Int16Array(buf.slice(o, (o += F * N * 6))), (v) => v * Q);
+        const nrm = Float32Array.from(new Int8Array(buf.slice(o, (o += F * N * 3))), (v) => v / 127);
+        if (o % 2) o++;
+        const jnt = Float32Array.from(new Int16Array(buf.slice(o, o + F * J * 6)), (v) => v * Q);
+        run = { F, J, dur: ms / 1000, pos, nrm, jnt };
+      })
+      .catch(() => {});
+    const SLOW = 1.3; // play the stride a little slower than real time
+    const runFrame = (t: number) => {
+      const r = run!;
+      const x = ((t / (r.dur * SLOW)) % 1) * r.F;
+      const f0 = Math.floor(x) % r.F, f1 = (f0 + 1) % r.F, w = x - Math.floor(x);
+      return { f0, f1, w };
+    };
+    const body = (t: number): Cloud => {
+      const r = run!;
+      const { f0, f1, w } = runFrame(t);
+      const a0 = f0 * N * 3, a1 = f1 * N * 3;
+      for (let i = 0; i < N * 3; i++) {
+        runPos[i] = r.pos[a0 + i] + (r.pos[a1 + i] - r.pos[a0 + i]) * w;
+        runNrm[i] = r.nrm[a0 + i] + (r.nrm[a1 + i] - r.nrm[a0 + i]) * w;
+      }
+      return { pos: runPos, acc: runAcc, nrm: runNrm };
+    };
+
+    const lineShapes = [building(), city()];
+    const lineClouds = lineShapes.map(sampleSegs);
+    const COUNT = 3;
+    // until the runner data has loaded, the building stands in for it
+    const cloudAt = (i: number, t: number) => (i === 2 ? (run ? body(t) : lineClouds[0]) : lineClouds[i]);
+    const delay = new Float32Array(N).map(() => Math.random() * 0.35);
+
+    // ───────────── rendering ─────────────
+    let W = 0, H = 0, dpr = 1, running = true, raf = 0;
+    let px = 0, py = 0, tx = 0, ty = 0;
+    const css = () => {
+      const s = getComputedStyle(document.documentElement);
+      return { ink: s.getPropertyValue('--ink').trim(), accent: s.getPropertyValue('--accent').trim() };
+    };
+    let colors = css();
+    new MutationObserver(() => (colors = css())).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => (colors = css()));
+    const rgb = (hex: string) => {
+      const h = hex.replace('#', '');
+      const n = parseInt(h.length === 3 ? h.replace(/./g, (c) => c + c) : h, 16);
+      return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+    };
+    const resize = () => {
+      const r = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = r.width;
+      H = r.height;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    const ease = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+    const HOLD = 5.2, MORPH = 2.0, CYCLE = HOLD + MORPH;
+
+    const frame = (tms: number) => {
+      const t = tms / 1000;
+      const ci = Math.floor(t / CYCLE);
+      const cur = ci % COUNT, prev = (cur + COUNT - 1) % COUNT;
+      const tc = t - ci * CYCLE;
+      const m = Math.min(tc / MORPH, 1);
+      const fade = Math.max(0, Math.min(1, (tc - MORPH) / 0.6, (CYCLE - tc) / 0.45));
+      const ink = rgb(colors.ink), accent = rgb(colors.accent);
+
+      px += (tx - px) * 0.04;
+      py += (ty - py) * 0.04;
+      const yaw = -0.75 + Math.sin(t * 0.14) * 0.55 + px * 0.4;
+      const pitch = 0.28 + py * 0.15;
+      const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+      const desktop = W > 900;
+      const scale = desktop ? Math.min(W * 0.17, H * 0.3) : Math.min(W * 0.2, 70);
+      const ox = desktop ? W * 0.74 : W * 0.5;
+      const oy = desktop ? H * 0.47 : 64 + 96;
+      const proj = (x: number, y: number, z: number) => {
+        const x1 = x * cy - z * sy, z1 = x * sy + z * cy;
+        const y2 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+        const p = 3.2 / (3.2 + z2);
+        return [ox + x1 * scale * p, oy - y2 * scale * p, z2] as const;
+      };
+      // facing factor of a normal: 0 = rim (silhouette), 1 = facing the viewer
+      const facing = (nx: number, ny: number, nz: number) => {
+        const z1 = nx * sy + nz * cy;
+        return ny * sp + z1 * cp;
+      };
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.lineWidth = 1;
+
+      // ground ellipse
+      ctx.strokeStyle = `rgba(${ink},0.07)`;
+      ctx.beginPath();
+      for (let k = 0; k <= 64; k++) {
+        const a = (k / 64) * Math.PI * 2;
+        const [x, y] = proj(Math.cos(a) * 1.25, -0.85, Math.sin(a) * 1.25);
+        k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+
+      // overlay lines: structure for building/city (the runner is points only)
+      if (fade > 0 && !(cur === 2 && run)) {
+        const segs = cur === 2 ? lineShapes[0] : lineShapes[cur];
+        for (const g of segs) {
+          const [ax, ay] = proj(g[0], g[1], g[2]);
+          const [bx, by] = proj(g[3], g[4], g[5]);
+          ctx.strokeStyle = g[6] ? `rgba(${accent},${0.55 * fade})` : `rgba(${ink},${0.16 * fade})`;
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+          ctx.stroke();
+        }
+      }
+
+      // point cloud
+      const A = cloudAt(prev, t), B = cloudAt(cur, t);
+      const alphaOf = (c: Cloud, k: number, depth: number) => {
+        if (!c.nrm) return c.acc[k] > 0.5 ? -1 : 0.42 * depth; // -1 = accent
+        const f = facing(c.nrm[k * 3], c.nrm[k * 3 + 1], c.nrm[k * 3 + 2]);
+        const rim = 1 - Math.abs(f);
+        return (0.3 + 0.7 * rim * rim) * (f > 0 ? 0.55 : 1); // back-facing points dimmer
+      };
+      for (let k = 0; k < N; k++) {
+        const e = ease(Math.max(0, Math.min(1, (m - delay[k]) / (1 - 0.35))));
+        const i3 = k * 3;
+        const x = A.pos[i3] + (B.pos[i3] - A.pos[i3]) * e;
+        const y = A.pos[i3 + 1] + (B.pos[i3 + 1] - A.pos[i3 + 1]) * e;
+        const z = A.pos[i3 + 2] + (B.pos[i3 + 2] - A.pos[i3 + 2]) * e;
+        const [sx, sy2, sz] = proj(x, y, z);
+        const depth = 0.55 + 0.45 * (1 - (sz + 1.4) / 2.8);
+        const aA = alphaOf(A, k, depth), aB = alphaOf(B, k, depth);
+        const isAcc = (e < 0.5 ? aA : aB) < 0;
+        if (isAcc) {
+          ctx.fillStyle = `rgba(${accent},0.95)`;
+          ctx.fillRect(sx - 1.4, sy2 - 1.4, 2.8, 2.8);
+        } else {
+          const al = Math.max(0, aA) * (1 - e) + Math.max(0, aB) * e;
+          ctx.fillStyle = `rgba(${ink},${al.toFixed(3)})`;
+          const r = 0.8 + 0.25 * ((A.nrm ? 1 - e : 0) + (B.nrm ? e : 0)); // runner points a bit larger
+          ctx.fillRect(sx - r, sy2 - r, r * 2, r * 2);
+        }
+      }
+
+      if (running && !reduce) raf = requestAnimationFrame(frame);
+    };
+
+    resize();
+    // static frame for reduced motion: the runner, fully drawn
+    const STATIC_T = 2 * CYCLE + MORPH + 1.5;
+    window.addEventListener('resize', () => {
+      resize(); // resizing clears the canvas, so redraw immediately
+      if (reduce) return frame(STATIC_T * 1000);
+      const wasRunning = running;
+      running = false;
+      frame(performance.now());
+      running = wasRunning;
+    });
+    window.addEventListener(
+      'pointermove',
+      (e) => {
+        tx = e.clientX / window.innerWidth - 0.5;
+        ty = e.clientY / window.innerHeight - 0.5;
+      },
+      { passive: true },
+    );
+    if (reduce) {
+      frame(STATIC_T * 1000);
+    } else {
+      new IntersectionObserver(([e]) => {
+        running = e.isIntersecting;
+        cancelAnimationFrame(raf);
+        if (running) raf = requestAnimationFrame(frame);
+      }).observe(canvas);
+    }
+  }
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: min(100svh, 980px);
+    display: flex;
+    align-items: flex-end;
+    padding-top: calc(var(--header-h) + 40px);
+    padding-bottom: clamp(40px, 6vw, 72px);
+    overflow: hidden;
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 70% at 70% 45%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 70% 45%, #000 30%, transparent 75%);
+  }
+  .mesh {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.55;
+  }
+  .hero-in {
+    position: relative;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 11px;
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+  .pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 var(--accent);
+    animation: pulse 2.4s infinite;
+    flex: none;
+  }
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent);
+    }
+    70% {
+      box-shadow: 0 0 0 9px transparent;
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+  .title {
+    font-size: clamp(52px, 9vw, 120px);
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+  }
+  .lede {
+    margin-top: 32px;
+    max-width: 40ch;
+    font-size: clamp(18px, 2vw, 22px);
+    line-height: 1.5;
+    color: var(--ink-2);
+  }
+  .lede em {
+    font-style: normal;
+    color: var(--ink);
+    background: linear-gradient(transparent 62%, var(--accent-soft) 62%);
+    box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 36px;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: clamp(48px, 8vw, 96px) 0 0;
+    border-top: 1px solid var(--line);
+  }
+  .stat {
+    padding: 20px 20px 20px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .stat:nth-child(even) {
+    padding-left: 20px;
+    border-left: 1px solid var(--line);
+  }
+  .stat dt {
+    font-size: clamp(32px, 3.6vw, 44px);
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .unit {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .stat dd {
+    margin: 10px 0 0;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--muted);
+    max-width: 26ch;
+  }
+  @media (min-width: 900px) {
+    .mesh {
+      opacity: 1;
+    }
+    .stats {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .stat,
+    .stat:nth-child(even) {
+      padding: 24px 24px 24px 0;
+    }
+    .stat + .stat {
+      padding-left: 24px;
+      border-left: 1px solid var(--line);
+    }
+  }
+  @media (max-width: 899px) {
+    .hero {
+      align-items: flex-start;
+      padding-top: calc(var(--header-h) + 180px);
+      min-height: 0;
+    }
+  }
+</style>

@@ -1,0 +1,218 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Illustration from './Illustration.astro';
+import Icon from './Icon.astro';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  variant?: 'feature' | 'compact';
+  index: number;
+}
+const { project, variant = 'compact', index } = Astro.props;
+const p = project.data;
+const href = p.hasPage ? `/projects/${project.id}/` : (p.repo ?? p.article ?? undefined);
+const external = !p.hasPage && !!href;
+const Tag = href ? 'a' : 'div';
+---
+
+<article class:list={['card', variant, 'reveal']} style={`--d:${(index % 3) * 0.06}s`}>
+  <Tag
+    class="card-link"
+    href={href}
+    target={external ? '_blank' : undefined}
+    rel={external ? 'noopener' : undefined}
+  >
+    <div class="card-art">
+      <Illustration kind={p.illustration} />
+      <span class="card-index mono">{String(index + 1).padStart(2, '0')}</span>
+    </div>
+    <div class="card-body">
+      <p class="card-meta mono">
+        <span>{p.area}</span><span aria-hidden="true">·</span><span>{p.year}</span>
+      </p>
+      <h3 class="card-title">{variant === 'feature' ? p.title : p.short}</h3>
+      <p class="card-summary">{p.summary}</p>
+
+      {
+        variant === 'feature' && p.metrics.length > 0 && (
+          <dl class="card-metrics">
+            {p.metrics.slice(0, 3).map((m) => (
+              <div>
+                <dt>{m.value}</dt>
+                <dd>{m.label}</dd>
+              </div>
+            ))}
+          </dl>
+        )
+      }
+
+      <ul class="chips">
+        {p.tags.slice(0, variant === 'feature' ? 6 : 4).map((t) => <li class="chip">{t}</li>)}
+      </ul>
+
+      <p class="card-foot">
+        {
+          p.hasPage ? (
+            <span class="link-arrow">
+              Read the case study <Icon name="arrow" />
+            </span>
+          ) : p.repo ? (
+            <span class="link-arrow">
+              View on GitHub <Icon name="arrow-up-right" />
+            </span>
+          ) : null
+        }
+        {
+          !p.repo && p.codeNote && (
+            <span class="private mono">
+              <Icon name="lock" /> {p.codeNote}
+            </span>
+          )
+        }
+      </p>
+    </div>
+  </Tag>
+</article>
+
+<style>
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s;
+  }
+  .card:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow);
+  }
+  .card-link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .card-art {
+    position: relative;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+    padding: 18px 18px 8px;
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .card-art :global(.illu) {
+    transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .card:hover .card-art :global(.illu) {
+    transform: scale(1.03);
+  }
+  .card-index {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    color: var(--muted);
+    font-size: 10.5px;
+  }
+  .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 24px;
+    flex: 1;
+  }
+  .card-meta {
+    display: flex;
+    gap: 8px;
+    color: var(--accent);
+    font-size: 11px;
+  }
+  .card-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    font-size: 21px;
+    line-height: 1.2;
+  }
+  .card-summary {
+    color: var(--ink-2);
+    font-size: 15.5px;
+    line-height: 1.6;
+  }
+  .card-foot {
+    margin-top: auto;
+    padding-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 20px;
+    align-items: center;
+  }
+  .private {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 10.5px;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  .private :global(svg) {
+    width: 12px;
+    height: 12px;
+  }
+  .card-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 4px 0;
+    padding-block: 16px;
+    border-block: 1px solid var(--line);
+  }
+  .card-metrics dt {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    font-size: clamp(18px, 1.8vw, 24px);
+    line-height: 1.05;
+    color: var(--ink);
+  }
+  .card-metrics dd {
+    margin: 6px 0 0;
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+
+  @media (min-width: 900px) {
+    .feature .card-link {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    }
+    .feature .card-art {
+      border-bottom: 0;
+      border-right: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      padding: 28px;
+    }
+    .feature .card-body {
+      padding: 40px;
+      gap: 18px;
+    }
+    .feature .card-title {
+      font-size: clamp(24px, 2.4vw, 32px);
+    }
+    .feature:nth-child(even) .card-link {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    }
+    .feature:nth-child(even) .card-art {
+      order: 2;
+      border-right: 0;
+      border-left: 1px solid var(--line);
+    }
+  }
+  @media (max-width: 540px) {
+    .card-metrics {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

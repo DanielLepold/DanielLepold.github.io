@@ -1,0 +1,56 @@
+---
+import { site } from '../data/site';
+import Icon from './Icon.astro';
+const year = new Date().getFullYear();
+---
+
+<footer class="ftr">
+  <div class="wrap ftr-in">
+    <p class="mono">© {year} Daniel Lepold</p>
+    <ul class="social" aria-label="Elsewhere">
+      <li><a href={site.links.github} target="_blank" rel="noopener" aria-label="GitHub"><Icon name="github" /></a></li>
+      <li><a href={site.links.linkedin} target="_blank" rel="noopener" aria-label="LinkedIn"><Icon name="linkedin" /></a></li>
+      <li><a href={site.links.medium} target="_blank" rel="noopener" aria-label="Medium"><Icon name="medium" /></a></li>
+      <li><a href={`mailto:${site.email}`} aria-label="E-mail"><Icon name="mail" /></a></li>
+    </ul>
+    <p class="mono muted">Built with Astro · Hosted on GitHub Pages</p>
+  </div>
+</footer>
+
+<style>
+  .ftr {
+    border-top: 1px solid var(--line);
+    padding-block: 32px;
+  }
+  .ftr-in {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+  .social {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .social a {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+    color: var(--ink-2);
+    transition: color 0.2s, background 0.2s;
+  }
+  .social a:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .social :global(svg) {
+    width: 17px;
+    height: 17px;
+  }
+</style>

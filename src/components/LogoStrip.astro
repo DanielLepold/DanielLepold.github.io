@@ -1,0 +1,154 @@
+---
+/**
+ * "Studied & worked at" strip. Drop a logo file into public/logos/ named after the
+ * slug (svg preferred, png/webp also work) and it replaces the text wordmark at the
+ * next build. Logos are shown as monochrome silhouettes so they share one style.
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+
+const groups = [
+  {
+    label: 'Studied at',
+    items: [
+      { slug: 'bme', name: 'Budapest University of Technology and Economics', short: 'BME' },
+      { slug: 'pannon', name: 'University of Pannonia', short: 'University of Pannonia' },
+      { slug: 'tf', name: 'Hungarian University of Sport Science', short: 'Hungarian University of Sport Science' },
+    ],
+  },
+  {
+    label: 'Worked at',
+    items: [
+      { slug: 'infrared-city', name: 'infrared.city', short: 'infrared.city' },
+      { slug: 'smino', name: 'smino', short: 'smino' },
+      { slug: 'bimspot', name: 'bimspot', short: 'bimspot' },
+      { slug: 'art-of-info', name: 'Art of info', short: 'Art of info' },
+      { slug: 'consteel', name: 'Consteel', short: 'Consteel' },
+      { slug: 'econ', name: 'Econ Engineering', short: 'Econ Engineering' },
+    ],
+  },
+];
+
+const dir = path.join(process.cwd(), 'public', 'logos');
+
+/** PNG width/height from the IHDR header (no image library needed). */
+const pngSize = (file: string) => {
+  const b = fs.readFileSync(file);
+  return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
+};
+
+/**
+ * Optical sizing: wide wordmarks get less height, square marks more, so every
+ * logo carries roughly the same visual weight.
+ */
+const findLogo = (slug: string) => {
+  for (const ext of ['png', 'svg', 'webp']) {
+    const file = path.join(dir, `${slug}.${ext}`);
+    if (!fs.existsSync(file)) continue;
+    let height = 32;
+    if (ext === 'png') {
+      const { w, h } = pngSize(file);
+      height = Math.round(Math.min(58, Math.max(24, 52 / Math.sqrt(w / h))));
+    }
+    return { src: `/logos/${slug}.${ext}`, height };
+  }
+  return null;
+};
+---
+
+<div class="logos">
+  {
+    groups.map((g) => (
+      <div class="logo-group reveal">
+        <p class="mono logo-label">{g.label}</p>
+        <ul>
+          {g.items.map((it) => {
+            const logo = findLogo(it.slug);
+            return (
+              <li title={it.name}>
+                {logo ? (
+                  <img src={logo.src} alt={it.name} loading="lazy" style={`height:${logo.height}px`} />
+                ) : (
+                  <span class="wordmark">{it.short}</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .logos {
+    display: grid;
+    gap: 36px;
+    margin-top: clamp(56px, 8vw, 88px);
+    padding-top: 36px;
+    border-top: 1px solid var(--line);
+  }
+  .logo-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 18px 32px;
+  }
+  li {
+    display: flex;
+    align-items: center;
+    height: 60px;
+  }
+  img {
+    width: auto;
+    max-width: 180px;
+    object-fit: contain;
+    /* monochrome silhouette, coloured on hover */
+    filter: grayscale(1) brightness(0);
+    opacity: 0.62;
+    transition: filter 0.3s, opacity 0.3s;
+  }
+  li:hover img {
+    filter: none;
+    opacity: 1;
+  }
+  :global(:root[data-theme='dark']) img {
+    filter: grayscale(1) brightness(0) invert(0.92);
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) img {
+      filter: grayscale(1) brightness(0) invert(0.92);
+    }
+  }
+  .wordmark {
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--muted);
+    transition: color 0.2s;
+    white-space: nowrap;
+  }
+  li:hover .wordmark {
+    color: var(--ink);
+  }
+  @media (min-width: 900px) {
+    .logos {
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 28px 48px;
+    }
+    .logo-group {
+      display: contents;
+    }
+    .logo-label {
+      margin: 10px 0 0;
+    }
+  }
+</style>
