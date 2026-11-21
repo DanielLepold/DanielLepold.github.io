@@ -46,6 +46,15 @@ const rest = projects.filter((p) => !p.data.featured);
         </div>
 
         <aside class="about-side reveal" style="--d:.1s">
+          <img
+            class="portrait"
+            src="/portrait.webp"
+            alt="Portrait of Daniel Lepold"
+            width="520"
+            height="520"
+            loading="lazy"
+            decoding="async"
+          />
           <p class="mono muted side-label">What drives me</p>
           <p class="side-quote display">
             Making the places we live more sustainable and liveable, and understanding the human
@@ -261,6 +270,7 @@ const rest = projects.filter((p) => !p.data.featured);
   }
   .about-text {
     display: grid;
+    align-content: start;
     gap: 22px;
     font-size: clamp(17px, 1.5vw, 19px);
     line-height: 1.7;
@@ -272,12 +282,32 @@ const rest = projects.filter((p) => !p.data.featured);
     font-weight: 600;
   }
   .about-side {
-    border-top: 1px solid var(--ink);
-    padding-top: 20px;
     align-self: start;
+  }
+  .portrait {
+    display: block;
+    width: 100%;
+    max-width: 260px;
+    height: auto;
+    aspect-ratio: 1;
+    margin-bottom: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: #fff;
+  }
+  /* the photo has a white background: tone it down so it does not glare on a dark page */
+  :global(:root[data-theme='dark']) .portrait {
+    filter: brightness(0.86);
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .portrait {
+      filter: brightness(0.86);
+    }
   }
   .side-label {
     font-size: 11px;
+    border-top: 1px solid var(--ink);
+    padding-top: 20px;
   }
   .side-quote {
     font-size: 20px;
