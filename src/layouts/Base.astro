@@ -11,6 +11,27 @@ interface Props {
 
 const { title = site.title, description = site.description } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const isHome = Astro.url.pathname === '/';
+
+/** Structured data for search engines: who this site is about, and the profiles that belong to him. */
+const person = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: site.name,
+  alternateName: ['Lépold Dániel', 'Dániel Lépold'],
+  url: new URL('/', Astro.site).href,
+  image: new URL('/portrait.webp', Astro.site).href,
+  jobTitle: 'Software Engineer',
+  description,
+  worksFor: { '@type': 'Organization', name: 'infrared.city', url: 'https://infrared.city' },
+  alumniOf: [
+    { '@type': 'CollegeOrUniversity', name: 'Budapest University of Technology and Economics' },
+    { '@type': 'CollegeOrUniversity', name: 'University of Pannonia' },
+    { '@type': 'CollegeOrUniversity', name: 'Hungarian University of Sport Science' },
+  ],
+  knowsLanguage: ['en', 'de', 'hu'],
+  sameAs: [site.links.linkedin, site.links.github, site.links.medium],
+};
 ---
 
 <!doctype html>
@@ -34,6 +55,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Daniel Lepold: software engineer and data scientist" />
     <meta name="twitter:card" content="summary_large_image" />
+    {isHome && <script type="application/ld+json" set:html={JSON.stringify(person)} />}
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
