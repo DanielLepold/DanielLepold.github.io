@@ -47,7 +47,16 @@ const rest = projects.filter((p) => !p.data.featured);
 
         <aside class="about-side reveal" style="--d:.1s">
           <img
-            class="portrait"
+            class="portrait portrait-light"
+            src="/portrait-cutout.webp"
+            alt="Portrait of Daniel Lepold"
+            width="520"
+            height="520"
+            loading="lazy"
+            decoding="async"
+          />
+          <img
+            class="portrait portrait-dark"
             src="/portrait.webp"
             alt="Portrait of Daniel Lepold"
             width="520"
@@ -291,17 +300,28 @@ const rest = projects.filter((p) => !p.data.featured);
     height: auto;
     aspect-ratio: 1;
     margin-bottom: 28px;
+  }
+  /* light theme: the white around the silhouette is transparent, so the photo sits on the page */
+  .portrait-dark {
+    display: none;
     border-radius: 6px;
     border: 1px solid var(--line);
     background: #fff;
-  }
-  /* the photo has a white background: tone it down so it does not glare on a dark page */
-  :global(:root[data-theme='dark']) .portrait {
     filter: brightness(0.86);
   }
+  /* dark theme: keep the original photo on its white background */
+  :global(:root[data-theme='dark']) .portrait-light {
+    display: none;
+  }
+  :global(:root[data-theme='dark']) .portrait-dark {
+    display: block;
+  }
   @media (prefers-color-scheme: dark) {
-    :global(:root:not([data-theme='light'])) .portrait {
-      filter: brightness(0.86);
+    :global(:root:not([data-theme='light'])) .portrait-light {
+      display: none;
+    }
+    :global(:root:not([data-theme='light'])) .portrait-dark {
+      display: block;
     }
   }
   .side-label {
