@@ -15,7 +15,7 @@ npm run build      # static output in dist/
 
 | What | File |
 | --- | --- |
-| Texts for hero, about, work, experience, education, toolbox | `src/data/site.ts` |
+| Texts for hero, about, experience, education, toolbox | `src/data/site.ts` |
 | Projects (one Markdown file each; `hasPage: true` gets a case-study page) | `src/content/projects/*.md` |
 | Project illustrations (inline SVG) | `src/components/Illustration.astro` |
 | Colours, fonts, shared styles | `src/styles/global.css` |

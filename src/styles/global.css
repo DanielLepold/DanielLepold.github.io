@@ -497,9 +497,8 @@ p {
 /* Longer explanatory paragraphs are justified; hyphenation keeps the spacing even,
    also in the narrow phone column. Narrow cards stay left-aligned. */
 .about-text p,
-.work-body,
 .role-body,
-.work-points li,
+.role-points li,
 .card.feature .card-summary,
 .case-summary,
 .prose p {

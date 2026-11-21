@@ -6,7 +6,7 @@ import SectionHead from '../components/SectionHead.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 import Icon from '../components/Icon.astro';
 import LogoStrip from '../components/LogoStrip.astro';
-import { site, arc, focus, work, experience, education, toolbox, spoken } from '../data/site';
+import { site, arc, focus, experience, education, toolbox, spoken } from '../data/site';
 
 const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
 const featured = projects.filter((p) => p.data.featured);
@@ -108,27 +108,32 @@ const rest = projects.filter((p) => !p.data.featured);
     </div>
   </section>
 
-  <!-- 03 WORK -->
-  <section id="work" class="section">
+  <!-- 03 EXPERIENCE -->
+  <section id="experience" class="section">
     <div class="wrap">
-      <SectionHead num="03" label="Selected work">Shipped <em>industry products</em></SectionHead>
-      <div class="work">
-        {work.map((w, i) => (
-          <article class="work-item reveal">
-            <div class="work-meta">
-              <span class="mono work-num">{String(i + 1).padStart(2, '0')}</span>
-              <p class="work-org">{w.org}</p>
-              <p class="mono muted">{w.period}</p>
+      <SectionHead num="03" label="Experience">Three areas of <em>my profession</em></SectionHead>
+      <div class="timeline">
+        {experience.map((era) => (
+          <div class="era">
+            <p class="era-name mono reveal">{era.era}</p>
+            <div class="era-roles">
+              {era.roles.map((r) => (
+                <article class:list={['role', 'reveal', { 'role-major': r.title }]}>
+                  <span class="role-dot" aria-hidden="true"></span>
+                  <div class="role-head">
+                    <h3>{r.role} <span class="muted">·</span> <span class="role-co">{r.company}</span></h3>
+                    <p class="mono muted">{r.period}{r.place && ` · ${r.place}`}</p>
+                  </div>
+                  {r.title && <p class="role-title">{r.title}</p>}
+                  <p class="role-body">{r.body}</p>
+                  {r.points && r.points.length > 0 && (
+                    <ul class="role-points">{r.points.map((pt) => <li>{pt}</li>)}</ul>
+                  )}
+                  {r.tags && <ul class="chips">{r.tags.map((t) => <li class="chip">{t}</li>)}</ul>}
+                </article>
+              ))}
             </div>
-            <div class="work-main">
-              <h3 class="work-title">{w.title}</h3>
-              <p class="work-body">{w.body}</p>
-              {w.points.length > 0 && (
-                <ul class="work-points">{w.points.map((pt) => <li>{pt}</li>)}</ul>
-              )}
-              <ul class="chips">{w.tags.map((t) => <li class="chip">{t}</li>)}</ul>
-            </div>
-          </article>
+          </div>
         ))}
       </div>
     </div>
@@ -149,36 +154,10 @@ const rest = projects.filter((p) => !p.data.featured);
     </div>
   </section>
 
-  <!-- 05 EXPERIENCE -->
-  <section id="experience" class="section">
-    <div class="wrap">
-      <SectionHead num="05" label="Experience">Three areas of <em>my profession</em></SectionHead>
-      <div class="timeline">
-        {experience.map((era) => (
-          <div class="era">
-            <p class="era-name mono reveal">{era.era}</p>
-            <div class="era-roles">
-              {era.roles.map((r) => (
-                <article class="role reveal">
-                  <span class="role-dot" aria-hidden="true"></span>
-                  <div class="role-head">
-                    <h3>{r.role} <span class="muted">·</span> <span class="role-co">{r.company}</span></h3>
-                    <p class="mono muted">{r.period}{r.place && ` · ${r.place}`}</p>
-                  </div>
-                  <p class="role-body">{r.body}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <!-- 06 EDUCATION -->
+  <!-- 05 EDUCATION -->
   <section id="education" class="section">
     <div class="wrap">
-      <SectionHead num="06" label="Education">Engineering roots with <em>data-driven branches</em></SectionHead>
+      <SectionHead num="05" label="Education">Engineering roots with <em>data-driven branches</em></SectionHead>
       <ol class="edu">
         {education.map((e) => (
           <li class="edu-item reveal">
@@ -194,10 +173,10 @@ const rest = projects.filter((p) => !p.data.featured);
     </div>
   </section>
 
-  <!-- 07 TOOLBOX -->
+  <!-- 06 TOOLBOX -->
   <section id="toolbox" class="section">
     <div class="wrap">
-      <SectionHead num="07" label="Toolbox">The tools <em>behind the work</em></SectionHead>
+      <SectionHead num="06" label="Toolbox">The tools <em>behind the work</em></SectionHead>
       <div class="tools">
         {toolbox.map((g) => (
           <div class="tool-row reveal">
@@ -209,10 +188,10 @@ const rest = projects.filter((p) => !p.data.featured);
     </div>
   </section>
 
-  <!-- 08 CONTACT -->
+  <!-- 07 CONTACT -->
   <section id="contact" class="section contact">
     <div class="wrap">
-      <p class="section-label mono reveal"><b>08</b> Contact</p>
+      <p class="section-label mono reveal"><b>07</b> Contact</p>
       <h2 class="contact-title display reveal" style="--d:.06s">
         Building something for the <em>built environment</em> or measuring <em>human motion</em>?
       </h2>
@@ -458,75 +437,6 @@ const rest = projects.filter((p) => !p.data.featured);
     }
   }
 
-  /* Work */
-  .work {
-    border-top: 1px solid var(--line);
-  }
-  .work-item {
-    display: grid;
-    gap: 18px;
-    padding-block: clamp(28px, 4vw, 44px);
-    border-bottom: 1px solid var(--line);
-  }
-  .work-meta {
-    display: grid;
-    gap: 6px;
-    align-content: start;
-  }
-  .work-num {
-    color: var(--accent);
-    font-size: 11px;
-  }
-  .work-org {
-    font-weight: 600;
-    font-size: 16px;
-  }
-  .work-meta .mono {
-    font-size: 11px;
-  }
-  .work-main {
-    display: grid;
-    gap: 16px;
-    max-width: 72ch;
-  }
-  .work-title {
-    font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.025em;
-    font-size: clamp(22px, 2.2vw, 28px);
-    line-height: 1.2;
-  }
-  .work-body {
-    color: var(--ink-2);
-  }
-  .work-points {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    gap: 10px;
-    font-size: 15.5px;
-    color: var(--ink-2);
-  }
-  .work-points li {
-    position: relative;
-    padding-left: 22px;
-  }
-  .work-points li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.78em;
-    width: 10px;
-    height: 1px;
-    background: var(--accent);
-  }
-  @media (min-width: 900px) {
-    .work-item {
-      grid-template-columns: 260px minmax(0, 1fr);
-    }
-  }
-
   /* Projects */
   .features {
     display: grid;
@@ -563,7 +473,7 @@ const rest = projects.filter((p) => !p.data.featured);
   .era-roles {
     border-left: 1px solid var(--line-strong);
     display: grid;
-    gap: 36px;
+    gap: 48px;
     padding-left: 28px;
   }
   .role {
@@ -598,6 +508,49 @@ const rest = projects.filter((p) => !p.data.featured);
   .role-body {
     color: var(--ink-2);
     font-size: 15.5px;
+  }
+  /* highlighted roles: a headline, the longer story, bullet points and tags */
+  .role-major {
+    gap: 14px;
+  }
+  .role-major .role-head {
+    margin-bottom: 4px;
+  }
+  .role-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    font-size: clamp(21px, 2vw, 26px);
+    line-height: 1.2;
+    color: var(--ink);
+  }
+  .role-major .role-body {
+    font-size: 16.5px;
+  }
+  .role-points {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    font-size: 15.5px;
+    color: var(--ink-2);
+  }
+  .role-points li {
+    position: relative;
+    padding-left: 22px;
+  }
+  .role-points li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.78em;
+    width: 10px;
+    height: 1px;
+    background: var(--accent);
+  }
+  .role .chips {
+    margin-top: 2px;
   }
   @media (min-width: 900px) {
     .era {

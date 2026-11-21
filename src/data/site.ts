@@ -13,9 +13,8 @@ export const site = {
 
 export const nav = [
   { href: '/#about', label: 'About' },
-  { href: '/#work', label: 'Work' },
-  { href: '/#projects', label: 'Projects' },
   { href: '/#experience', label: 'Experience' },
+  { href: '/#projects', label: 'Projects' },
   { href: '/#education', label: 'Education' },
   { href: '/#contact', label: 'Contact' },
 ];
@@ -61,44 +60,23 @@ export const focus = [
   },
 ];
 
-export const work = [
-  {
-    org: 'infrared.city',
-    period: '2025 – now',
-    title: 'Climate-tech AEC software from zero to production',
-    body: 'I own infrared.city’s integrations across five host platforms: Revit, Grasshopper/Rhino, SketchUp, QGIS and ArcGIS. The work covers architecture, implementation, packaging, release and customer support, and brings AI-driven urban climate simulation (thermal comfort, wind, solar radiation) into the tools architects and planners already use.',
-    points: [
-      'Revit add-in published on the Autodesk App Store, plus a Dynamo workflow and a Claude skill (an LLM agent) that generates the Dynamo commands and guides users',
-      'Shared SDKs for Python and .NET, built on a Rust core compiled for both runtimes',
-      'OGC API–compliant backend APIs in Python: versioned endpoints, explicit contracts, scalable geometry processing',
-      'Data pipelines for 3D buildings, ground materials and vegetation from Overture Maps, OpenStreetMap and Mapbox',
-      'Godot Marathon AI simulator, a client project with Godot Inc. Japan and ASICS: I built the pipeline that tiles and aggregates our climate simulation results (heat, wind, shading) along the race route as input to their behavioural AI model of marathon runners',
-    ],
-    tags: ['C# / .NET', 'Python', 'Rust', 'Revit API', 'QGIS', 'ArcGIS', 'Grasshopper', 'SketchUp'],
-  },
-  {
-    org: 'bimspot → smino',
-    period: '2021 – 2025',
-    title: 'A cloud-native BIM platform',
-    body: 'I built microservices for a BIM collaboration platform that was acquired by smino (Zürich) along the way. The platform was built on buildingSMART open standards (IFC, BCF, IDS, bSDD) and deployed with Kubernetes on AWS and Azure.',
-    points: [
-      'Microservices in .NET Core, F# and Node.js with Helm, Flux, Argo Workflows and RabbitMQ, monitored with Grafana and Sentry',
-      'A production RAG assistant over project documents, 2D plans and contracts (Azure AI Search, vector index)',
-      'Embodied-CO₂ prediction from IFC models, plus analytics dashboards for management, product and sales',
-    ],
-    tags: ['F#', 'C# / .NET', 'Node.js', 'Kubernetes', 'IFC', 'RAG'],
-  },
-  {
-    org: 'Consteel',
-    period: '2018 – 2020',
-    title: 'Finite element software in C++',
-    body: 'I worked on a finite element CAD/CAE desktop application for structural engineers: the mechanical and mathematical routines, linear algebra, numerical correctness and performance.',
-    points: [],
-    tags: ['C++', 'FEM', 'Linear algebra'],
-  },
-];
-
-export const experience = [
+/**
+ * Career, grouped into the three areas. Roles with a `title` are the highlighted ones
+ * and also get bullet points and tags.
+ */
+export const experience: {
+  era: string;
+  roles: {
+    company: string;
+    place: string;
+    role: string;
+    period: string;
+    title?: string;
+    body: string;
+    points?: string[];
+    tags?: string[];
+  }[];
+}[] = [
   {
     era: 'AEC software & data',
     roles: [
@@ -107,14 +85,31 @@ export const experience = [
         place: 'Vienna · hybrid',
         role: 'AEC Software Developer',
         period: 'May 2025 – present',
-        body: 'Plugin portfolio for Revit, Grasshopper, SketchUp, QGIS and ArcGIS; Python, .NET and Rust SDKs; OGC API backends; geospatial data pipelines; CI/CD and customer support.',
+        title: 'Climate-tech AEC software from zero to production',
+        body: 'I own infrared.city’s integrations across five host platforms: Revit, Grasshopper/Rhino, SketchUp, QGIS and ArcGIS. The work covers architecture, implementation, packaging, release and customer support, and brings AI-driven urban climate simulation (thermal comfort, wind, solar radiation) into the tools architects and planners already use.',
+        points: [
+          'Revit add-in published on the Autodesk App Store, plus a Dynamo workflow and a Claude skill (an LLM agent) that generates the Dynamo commands and guides users',
+          'Shared SDKs for Python and .NET, built on a Rust core compiled for both runtimes',
+          'OGC API–compliant backend APIs in Python: versioned endpoints, explicit contracts, scalable geometry processing',
+          'Data pipelines for 3D buildings, ground materials and vegetation from Overture Maps, OpenStreetMap and Mapbox',
+          'Godot Marathon AI simulator, a client project with Godot Inc. Japan and ASICS: I built the pipeline that tiles and aggregates our climate simulation results (heat, wind, shading) along the race route as input to their behavioural AI model of marathon runners',
+        ],
+        tags: ['C# / .NET', 'Python', 'Rust', 'Revit API', 'QGIS', 'ArcGIS', 'Grasshopper', 'SketchUp'],
       },
       {
         company: 'bimspot, acquired by smino',
         place: 'Vienna / Zürich · hybrid',
         role: 'Software Engineer',
         period: 'Nov 2021 – May 2025',
-        body: 'Cloud-native BIM microservices in .NET, F# and Node.js on Kubernetes (AWS, Azure); buildingSMART standards; a RAG assistant; CO₂ prediction from IFC; deep learning for image classification and segmentation.',
+        title: 'A cloud-native BIM platform',
+        body: 'I built microservices for a BIM collaboration platform that was acquired by smino (Zürich) along the way. The platform was built on buildingSMART open standards (IFC, BCF, IDS, bSDD) and deployed with Kubernetes on AWS and Azure.',
+        points: [
+          'Microservices in .NET Core, F# and Node.js with Helm, Flux, Argo Workflows and RabbitMQ, monitored with Grafana and Sentry',
+          'A production RAG assistant over project documents, 2D plans and contracts (Azure AI Search, vector index)',
+          'Embodied-CO₂ prediction from IFC models, plus analytics dashboards for management, product and sales',
+          'Deep learning for image classification and segmentation',
+        ],
+        tags: ['F#', 'C# / .NET', 'Node.js', 'Kubernetes', 'IFC', 'RAG'],
       },
     ],
   },
@@ -133,7 +128,9 @@ export const experience = [
         place: '',
         role: 'Software Engineer',
         period: 'Jan 2018 – Mar 2020',
-        body: 'C++ development of a finite element CAD/CAE application: numerical routines, linear algebra, correctness and performance.',
+        title: 'Finite element software in C++',
+        body: 'I worked on a finite element CAD/CAE desktop application for structural engineers: the mechanical and mathematical routines, linear algebra, numerical correctness and performance.',
+        tags: ['C++', 'FEM', 'Linear algebra'],
       },
     ],
   },
