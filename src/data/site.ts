@@ -64,7 +64,7 @@ export const work = [
   {
     org: 'infrared.city',
     period: '2025 – now',
-    title: 'A plugin portfolio, from zero to production',
+    title: 'Climate-tech AEC software from zero to production',
     body: 'I own infrared.city’s integrations across five host platforms: Revit, Grasshopper/Rhino, SketchUp, QGIS and ArcGIS. The work covers architecture, implementation, packaging, release and customer support, and brings AI-driven urban climate simulation (thermal comfort, wind, solar radiation) into the tools architects and planners already use.',
     points: [
       'Revit add-in published on the Autodesk App Store, plus a Dynamo workflow and a Claude skill (an LLM agent) that generates the Dynamo commands and guides users',
