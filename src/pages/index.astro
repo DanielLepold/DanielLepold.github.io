@@ -24,7 +24,7 @@ const rest = projects.filter((p) => !p.data.featured);
       <div class="about">
         <div class="about-text">
           <p class="reveal">
-            I trained as a structural engineer at the Budapest University of Technology and Economics.
+            I studied at the Budapest University of Technology and Economics as a structural engineer.
             My MSc in <strong>Computational Structural Engineering</strong>, taught in English, was all about
             numerical methods and non-linear finite element analysis, and my thesis was already biomechanics:
             a finite element model of impacts on the human chest. I spent the first years of my career
@@ -202,10 +202,17 @@ const rest = projects.filter((p) => !p.data.featured);
         I'm happy to talk about AEC and geospatial software, SDK and backend work, or computer vision for
         sport science.
       </p>
-      <a class="contact-mail reveal" style="--d:.18s" href={`mailto:${site.email}`}>
-        {site.email}
-        <Icon name="arrow-up-right" />
-      </a>
+      <div class="contact-mail-row reveal" style="--d:.18s">
+        <a class="contact-mail" href={`mailto:${site.email}`}>
+          {site.email}
+          <Icon name="arrow-up-right" />
+        </a>
+        <button class="copy-btn" type="button" data-copy={site.email} aria-label="Copy e-mail address">
+          <span class="copy-idle"><Icon name="copy" /> Copy</span>
+          <span class="copy-done"><Icon name="check" /> Copied</span>
+        </button>
+        <span class="sr-only" role="status" aria-live="polite"></span>
+      </div>
       <ul class="contact-links reveal" style="--d:.24s">
         <li><a href={site.links.linkedin} target="_blank" rel="noopener"><Icon name="linkedin" /> LinkedIn</a></li>
         <li><a href={site.links.github} target="_blank" rel="noopener"><Icon name="github" /> GitHub</a></li>
@@ -214,6 +221,37 @@ const rest = projects.filter((p) => !p.data.featured);
     </div>
   </section>
 </Base>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach((btn) => {
+    let timer: number | undefined;
+    const status = btn.parentElement?.querySelector('[role="status"]');
+    btn.addEventListener('click', async () => {
+      const text = btn.dataset.copy ?? '';
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        // fallback for browsers without async clipboard access
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch {}
+        ta.remove();
+      }
+      btn.classList.add('copied');
+      if (status) status.textContent = 'E-mail address copied';
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        btn.classList.remove('copied');
+        if (status) status.textContent = '';
+      }, 1800);
+    });
+  });
+</script>
 
 <style>
   /* About */
@@ -601,11 +639,61 @@ const rest = projects.filter((p) => !p.data.featured);
     font-size: 18px;
     color: var(--ink-2);
   }
+  .contact-mail-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 20px;
+    margin-top: 44px;
+  }
+  .copy-btn {
+    position: relative;
+    display: inline-grid;
+    align-items: center;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .copy-btn:hover,
+  .copy-btn:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .copy-btn > span {
+    grid-area: 1 / 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    transition: opacity 0.2s;
+  }
+  .copy-btn :global(svg) {
+    width: 14px;
+    height: 14px;
+  }
+  .copy-done {
+    opacity: 0;
+  }
+  .copy-btn.copied {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .copy-btn.copied .copy-idle {
+    opacity: 0;
+  }
+  .copy-btn.copied .copy-done {
+    opacity: 1;
+  }
   .contact-mail {
     display: inline-flex;
     align-items: center;
     gap: 14px;
-    margin-top: 44px;
     font-family: var(--font-display);
     font-weight: 600;
     letter-spacing: -0.025em;

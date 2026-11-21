@@ -493,3 +493,32 @@ p {
   border-top: 1px solid var(--line);
   margin-top: 2.5em;
 }
+
+/* Longer explanatory paragraphs are justified on wider screens; hyphenation keeps the
+   spacing even. Narrow cards and phone widths stay left-aligned, where justification
+   would open wide gaps between words. */
+@media (min-width: 720px) {
+  .about-text p,
+  .work-body,
+  .role-body,
+  .work-points li,
+  .card.feature .card-summary,
+  .case-summary,
+  .prose p {
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
