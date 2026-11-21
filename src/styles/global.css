@@ -494,21 +494,18 @@ p {
   margin-top: 2.5em;
 }
 
-/* Longer explanatory paragraphs are justified on wider screens; hyphenation keeps the
-   spacing even. Narrow cards and phone widths stay left-aligned, where justification
-   would open wide gaps between words. */
-@media (min-width: 720px) {
-  .about-text p,
-  .work-body,
-  .role-body,
-  .work-points li,
-  .card.feature .card-summary,
-  .case-summary,
-  .prose p {
-    text-align: justify;
-    hyphens: auto;
-    -webkit-hyphens: auto;
-  }
+/* Longer explanatory paragraphs are justified; hyphenation keeps the spacing even,
+   also in the narrow phone column. Narrow cards stay left-aligned. */
+.about-text p,
+.work-body,
+.role-body,
+.work-points li,
+.card.feature .card-summary,
+.case-summary,
+.prose p {
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
 }
 
 .sr-only {
