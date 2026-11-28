@@ -155,7 +155,7 @@ export const education = [
     period: '2026 – present',
     notes: [
       'Research focus: video-based kinematic measurement of athletes',
-      'Student research (TDK): hammer-throw release parameters from competition video',
+      'Student research (TDK): hammer-throw release parameters from competition video. 1st place in the Biomechanics section of the TDK conference',
     ],
   },
   {

@@ -6,6 +6,7 @@ context: TDK research · Hungarian University of Sport Science
 year: '2026'
 order: 1
 featured: true
+award: '1st place · TDK conference, Biomechanics section'
 area: Sport science
 illustration: hammer
 tags: [Python, YOLO, Kalman filter, Epipolar geometry, Triangulation, Bland–Altman]

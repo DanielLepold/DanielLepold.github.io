@@ -30,6 +30,13 @@ const Tag = href ? 'a' : 'div';
       <p class="card-meta mono">
         <span>{p.area}</span><span aria-hidden="true">·</span><span>{p.year}</span>
       </p>
+      {
+        p.award && (
+          <p class="award mono">
+            <Icon name="award" /> {p.award}
+          </p>
+        )
+      }
       <h3 class="card-title">{variant === 'feature' ? p.title : p.short}</h3>
       <p class="card-summary">{p.summary}</p>
 
@@ -125,6 +132,21 @@ const Tag = href ? 'a' : 'div';
     gap: 8px;
     color: var(--accent);
     font-size: 11px;
+  }
+  .award {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 11px 5px 9px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 11px;
+  }
+  .award :global(svg) {
+    width: 13px;
+    height: 13px;
   }
   .card-title {
     font-family: var(--font-display);

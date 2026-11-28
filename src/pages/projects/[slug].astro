@@ -28,6 +28,13 @@ const { Content } = await render(project);
     <header class="case-head wrap">
       <a class="back mono" href="/#projects"><Icon name="arrow" class="back-ic" /> All projects</a>
       <p class="case-meta mono">{p.context} · {p.year}</p>
+      {
+        p.award && (
+          <p class="award mono">
+            <Icon name="award" /> {p.award}
+          </p>
+        )
+      }
       <h1 class="case-title display">{p.title}</h1>
       <p class="case-summary">{p.summary}</p>
     </header>
@@ -135,6 +142,21 @@ const { Content } = await render(project);
     margin-top: 40px;
     font-size: 11px;
     color: var(--accent);
+  }
+  .award {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 6px 13px 6px 11px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 11px;
+  }
+  .award :global(svg) {
+    width: 14px;
+    height: 14px;
   }
   .case-title {
     margin-top: 18px;

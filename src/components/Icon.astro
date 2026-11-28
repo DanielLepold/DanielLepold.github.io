@@ -1,6 +1,6 @@
 ---
 interface Props {
-  name: 'arrow' | 'arrow-up-right' | 'github' | 'linkedin' | 'medium' | 'mail' | 'sun' | 'moon' | 'lock' | 'menu' | 'close' | 'copy' | 'check';
+  name: 'arrow' | 'arrow-up-right' | 'github' | 'linkedin' | 'medium' | 'mail' | 'sun' | 'moon' | 'lock' | 'menu' | 'close' | 'copy' | 'check' | 'award';
   class?: string;
 }
 const { name, class: cls } = Astro.props;
@@ -44,4 +44,7 @@ const { name, class: cls } = Astro.props;
 )}
 {name === 'check' && (
   <svg class={cls} viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+)}
+{name === 'award' && (
+  <svg class={cls} viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="6" r="4" /><path d="M5.6 9.2 4.5 14.5 8 12.6l3.5 1.9-1.1-5.3" stroke-linejoin="round" /></svg>
 )}

@@ -18,6 +18,7 @@ const projects = defineCollection({
     repo: z.string().url().optional(),
     article: z.string().url().optional(),
     codeNote: z.string().optional(), // shown when there's no public repo
+    award: z.string().optional(), // e.g. "1st place · TDK conference"
     metrics: z
       .array(z.object({ value: z.string(), label: z.string() }))
       .default([]),
